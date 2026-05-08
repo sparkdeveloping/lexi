@@ -3,7 +3,12 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -42,109 +47,322 @@ async function track(eventName, data = {}) {
   }
 }
 
+const quizQuestions = [
+  {
+    id: "green",
+    eyebrow: "Question 1",
+    title: "What is the most powerful color in the universe?",
+    subtitle: "This is not biased. This is science performed by leaves.",
+    answers: [
+      {
+        label: "Green, obviously",
+        reaction: "Correct. The trees are clapping politely.",
+        points: 30,
+        emoji: "🌿",
+      },
+      {
+        label: "Olive green, specifically",
+        reaction: "Extremely refined answer. Very classy leaf behavior.",
+        points: 35,
+        emoji: "🫒",
+      },
+      {
+        label: "Not green",
+        reaction: "That answer has been gently recycled into compost.",
+        points: 10,
+        emoji: "♻️",
+      },
+    ],
+  },
+  {
+    id: "snack",
+    eyebrow: "Question 2",
+    title: "Lexi is given a tiny magical leaf. What should it do?",
+    subtitle: "Choose carefully. The leaf has a little hat and everything.",
+    answers: [
+      {
+        label: "Give her a good day",
+        reaction: "The leaf salutes. Mission accepted.",
+        points: 30,
+        emoji: "🍃",
+      },
+      {
+        label: "Make her smile for no reason",
+        reaction: "Powerful. Slightly suspicious. Approved.",
+        points: 35,
+        emoji: "✨",
+      },
+      {
+        label: "Follow her around dramatically",
+        reaction: "The leaf has entered theater mode.",
+        points: 25,
+        emoji: "🎭",
+      },
+    ],
+  },
+  {
+    id: "compliment",
+    eyebrow: "Question 3",
+    title: "What is Lexi’s official title today?",
+    subtitle: "This will go into the completely fake but very serious records.",
+    answers: [
+      {
+        label: "Duchess of Good Vibes",
+        reaction: "Royal decree accepted.",
+        points: 30,
+        emoji: "👑",
+      },
+      {
+        label: "CEO of Looking Pretty in Green",
+        reaction: "The board voted unanimously.",
+        points: 35,
+        emoji: "💚",
+      },
+      {
+        label: "Professional Smile Collector",
+        reaction: "A rare and important career path.",
+        points: 30,
+        emoji: "😊",
+      },
+    ],
+  },
+];
+
 function randomSpot() {
   return {
-    x: Math.floor(Math.random() * 70) - 35,
-    y: Math.floor(Math.random() * 60) - 30,
-    rotate: Math.floor(Math.random() * 34) - 17,
+    x: Math.floor(Math.random() * 90) - 45,
+    y: Math.floor(Math.random() * 80) - 40,
+    rotate: Math.floor(Math.random() * 44) - 22,
   };
 }
 
+function FloatingBlob({ className, duration = 8 }) {
+  return (
+    <motion.div
+      className={className}
+      animate={{
+        scale: [1, 1.2, 1],
+        x: [0, 28, 0],
+        y: [0, -24, 0],
+      }}
+      transition={{
+        duration,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
+  );
+}
+
+function ProgressDots({ step }) {
+  const labels = ["Start", "Quiz", "Mood", "Reward"];
+
+  return (
+    <div className="mx-auto mb-7 flex w-full max-w-md items-center justify-center gap-2">
+      {labels.map((label, index) => {
+        const active = index <= step;
+
+        return (
+          <div key={label} className="flex items-center gap-2">
+            <motion.div
+              animate={{
+                scale: active ? 1 : 0.86,
+                opacity: active ? 1 : 0.45,
+              }}
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black ${
+                active
+                  ? "bg-lime-300 text-emerald-950 shadow-lg shadow-lime-950/30"
+                  : "bg-emerald-900 text-emerald-200"
+              }`}
+            >
+              {index + 1}
+            </motion.div>
+
+            {index < labels.length - 1 && (
+              <div
+                className={`h-1 w-8 rounded-full ${
+                  index < step ? "bg-lime-300" : "bg-emerald-900"
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Page() {
-  const [step, setStep] = useState("intro");
+  const [screen, setScreen] = useState("intro");
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [reaction, setReaction] = useState("");
   const [noCount, setNoCount] = useState(0);
   const [noSpot, setNoSpot] = useState({ x: 0, y: 0, rotate: 0 });
   const [sparkles, setSparkles] = useState([]);
 
-  const yesScale = useMemo(() => Math.min(1 + noCount * 0.18, 2.35), [noCount]);
+  const currentQuestion = quizQuestions[quizIndex];
+
+  const progressStep = useMemo(() => {
+    if (screen === "intro") return 0;
+    if (screen === "quiz") return 1;
+    if (screen === "mood") return 2;
+    return 3;
+  }, [screen]);
+
+  const smileScore = useMemo(() => {
+    return Math.min(100, Math.round((score / 100) * 100) + 12);
+  }, [score]);
+
+  const yesScale = useMemo(() => Math.min(1 + noCount * 0.2, 2.6), [noCount]);
 
   const noLabel = useMemo(() => {
     const labels = [
-      "Not really",
+      "No",
       "Hmm no",
-      "Maybe later",
+      "Not yet",
       "Still no",
       "Lexi please",
-      "That button is tired",
+      "That button is panicking",
       "Green says yes",
       "Okay but why",
+      "This is getting personal",
+      "Fine, I live over here now",
     ];
 
     return labels[Math.min(noCount, labels.length - 1)];
   }, [noCount]);
 
-  function makeSparkles() {
-    const next = Array.from({ length: 18 }).map((_, i) => ({
+  function makeSparkles(amount = 22) {
+    const next = Array.from({ length: amount }).map((_, i) => ({
       id: `${Date.now()}-${i}`,
       left: Math.random() * 100,
       top: Math.random() * 100,
-      size: Math.random() * 10 + 6,
-      delay: Math.random() * 0.2,
+      size: Math.random() * 10 + 5,
+      delay: Math.random() * 0.25,
     }));
 
     setSparkles(next);
 
     setTimeout(() => {
       setSparkles([]);
-    }, 1200);
+    }, 1300);
   }
 
   async function handleStart() {
     await track("start_clicked");
-    setStep("question");
+    makeSparkles();
+    setScreen("quiz");
+  }
+
+  async function handleQuizAnswer(answer) {
+    const nextAnswers = [
+      ...answers,
+      {
+        questionId: currentQuestion.id,
+        answer: answer.label,
+        points: answer.points,
+      },
+    ];
+
+    setAnswers(nextAnswers);
+    setScore((current) => current + answer.points);
+    setReaction(`${answer.emoji} ${answer.reaction}`);
+    makeSparkles(16);
+
+    await track("quiz_answer_clicked", {
+      questionId: currentQuestion.id,
+      answer: answer.label,
+      points: answer.points,
+      quizIndex,
+    });
+
+    setTimeout(() => {
+      setReaction("");
+
+      if (quizIndex < quizQuestions.length - 1) {
+        setQuizIndex((current) => current + 1);
+      } else {
+        setScreen("mood");
+      }
+    }, 950);
   }
 
   async function handleNo(trigger = "click") {
     const nextCount = noCount + 1;
+
     setNoCount(nextCount);
     setNoSpot(randomSpot());
-    makeSparkles();
+    makeSparkles(12);
 
     await track("no_interaction", {
       trigger,
       noCount: nextCount,
+      screen,
     });
   }
 
   async function handleYes() {
     await track("yes_clicked", {
       noCount,
+      score,
+      smileScore,
+      answers,
     });
 
-    makeSparkles();
-    setStep("reveal");
+    makeSparkles(34);
+    setScreen("result");
   }
 
   async function handleFinalChoice(choice) {
     await track("final_choice_clicked", {
       choice,
+      score,
+      smileScore,
+      noCount,
+      answers,
     });
 
-    setStep("final");
+    makeSparkles(36);
+    setScreen("final");
+  }
+
+  async function restart() {
+    await track("restart_clicked", {
+      previousScore: score,
+      previousSmileScore: smileScore,
+      previousNoCount: noCount,
+      answers,
+    });
+
+    setScreen("intro");
+    setQuizIndex(0);
+    setScore(0);
+    setAnswers([]);
+    setReaction("");
+    setNoCount(0);
+    setNoSpot({ x: 0, y: 0, rotate: 0 });
+    makeSparkles(20);
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#06180f] text-emerald-50">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#84cc16_0%,transparent_28%),radial-gradient(circle_at_bottom_right,#16a34a_0%,transparent_30%),linear-gradient(135deg,#052e16,#064e3b,#1a2e05)] opacity-70" />
+    <main className="relative min-h-screen overflow-hidden bg-[#04140c] text-emerald-50">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#84cc16_0%,transparent_26%),radial-gradient(circle_at_bottom_right,#22c55e_0%,transparent_32%),radial-gradient(circle_at_50%_0%,#365314_0%,transparent_28%),linear-gradient(135deg,#03140b,#064e3b,#1a2e05)] opacity-75" />
 
-      <motion.div
-        className="absolute left-10 top-14 h-44 w-44 rounded-full bg-lime-300/20 blur-3xl"
-        animate={{
-          scale: [1, 1.25, 1],
-          x: [0, 30, 0],
-          y: [0, -20, 0],
-        }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(#bef264_1px,transparent_1px),linear-gradient(90deg,#bef264_1px,transparent_1px)] [background-size:46px_46px]" />
+
+      <FloatingBlob
+        duration={8}
+        className="absolute left-8 top-12 h-44 w-44 rounded-full bg-lime-300/20 blur-3xl"
       />
-
-      <motion.div
-        className="absolute bottom-10 right-10 h-56 w-56 rounded-full bg-emerald-400/20 blur-3xl"
-        animate={{
-          scale: [1.15, 1, 1.15],
-          x: [0, -25, 0],
-          y: [0, 25, 0],
-        }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+      <FloatingBlob
+        duration={10}
+        className="absolute bottom-10 right-10 h-60 w-60 rounded-full bg-emerald-400/20 blur-3xl"
+      />
+      <FloatingBlob
+        duration={12}
+        className="absolute bottom-1/3 left-1/3 h-40 w-40 rounded-full bg-green-200/10 blur-3xl"
       />
 
       <div className="pointer-events-none absolute inset-0">
@@ -159,43 +377,73 @@ export default function Page() {
               height: sparkle.size,
             }}
             initial={{ opacity: 0, scale: 0, y: 0 }}
-            animate={{ opacity: [0, 1, 0], scale: [0, 1.4, 0], y: -40 }}
-            transition={{ duration: 1, delay: sparkle.delay }}
+            animate={{
+              opacity: [0, 1, 0],
+              scale: [0, 1.5, 0],
+              y: -45,
+            }}
+            transition={{
+              duration: 1.1,
+              delay: sparkle.delay,
+            }}
           />
         ))}
       </div>
 
       <section className="relative z-10 flex min-h-screen items-center justify-center px-5 py-10">
         <AnimatePresence mode="wait">
-          {step === "intro" && (
+          {screen === "intro" && (
             <motion.div
               key="intro"
               initial={{ opacity: 0, y: 24, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -24, scale: 0.98 }}
               transition={{ duration: 0.45 }}
-              className="w-full max-w-2xl rounded-[2rem] border border-lime-200/20 bg-emerald-950/70 p-8 text-center shadow-2xl shadow-black/30 backdrop-blur-xl md:p-12"
+              className="w-full max-w-3xl rounded-[2rem] border border-lime-200/20 bg-emerald-950/70 p-7 text-center shadow-2xl shadow-black/30 backdrop-blur-xl md:p-12"
             >
+              <ProgressDots step={progressStep} />
+
               <motion.div
-                animate={{ rotate: [-4, 4, -4] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-lime-300 text-4xl shadow-lg shadow-lime-900/40"
+                animate={{ rotate: [-5, 5, -5], y: [0, -4, 0] }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-lime-300 text-5xl shadow-xl shadow-lime-950/40"
               >
                 🍃
               </motion.div>
 
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-lime-200">
-                A tiny green website
+                Official Green Department
               </p>
 
               <h1 className="mb-5 text-4xl font-black tracking-tight text-lime-50 md:text-6xl">
-                Lexi’s Mood Check
+                Lexi’s Smile Quiz
               </h1>
 
               <p className="mx-auto mb-8 max-w-xl text-base leading-7 text-emerald-100/90 md:text-lg">
-                This page has one mission: determine if Lexi is having a good day,
-                and if not, aggressively deploy green nonsense until morale improves.
+                A very serious, definitely scientific quiz designed to check
+                Lexi’s mood, collect a few smiles, and prove that green is carrying
+                the entire universe.
               </p>
+
+              <div className="mb-8 grid gap-3 md:grid-cols-3">
+                {[
+                  ["3", "tiny questions"],
+                  ["1", "runaway button"],
+                  ["100%", "green nonsense"],
+                ].map(([number, label]) => (
+                  <div
+                    key={label}
+                    className="rounded-3xl border border-lime-200/10 bg-lime-200/5 p-4"
+                  >
+                    <p className="text-3xl font-black text-lime-200">{number}</p>
+                    <p className="text-sm text-emerald-100/75">{label}</p>
+                  </div>
+                ))}
+              </div>
 
               <motion.button
                 onClick={handleStart}
@@ -203,54 +451,123 @@ export default function Page() {
                 whileTap={{ scale: 0.97 }}
                 className="rounded-full bg-lime-300 px-8 py-4 text-lg font-extrabold text-emerald-950 shadow-xl shadow-lime-950/30 transition hover:bg-lime-200"
               >
-                Begin the very official test
+                Begin Lexi’s very official quiz
               </motion.button>
             </motion.div>
           )}
 
-          {step === "question" && (
+          {screen === "quiz" && currentQuestion && (
             <motion.div
-              key="question"
+              key={`quiz-${currentQuestion.id}`}
               initial={{ opacity: 0, y: 24, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -24, scale: 0.98 }}
               transition={{ duration: 0.45 }}
-              className="relative w-full max-w-3xl rounded-[2rem] border border-emerald-200/20 bg-[#092315]/80 p-7 text-center shadow-2xl shadow-black/30 backdrop-blur-xl md:p-12"
+              className="w-full max-w-4xl rounded-[2rem] border border-lime-200/20 bg-[#082215]/80 p-7 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-12"
             >
+              <ProgressDots step={progressStep} />
+
+              <div className="mb-8 text-center">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-lime-200">
+                  {currentQuestion.eyebrow}
+                </p>
+
+                <h2 className="mb-4 text-3xl font-black tracking-tight text-lime-50 md:text-5xl">
+                  {currentQuestion.title}
+                </h2>
+
+                <p className="mx-auto max-w-2xl text-emerald-100/85">
+                  {currentQuestion.subtitle}
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                {currentQuestion.answers.map((answer) => (
+                  <motion.button
+                    key={answer.label}
+                    onClick={() => handleQuizAnswer(answer)}
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="group rounded-3xl border border-lime-200/15 bg-lime-200/10 p-6 text-left shadow-lg shadow-black/20 transition hover:bg-lime-200/15"
+                  >
+                    <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-lime-300 text-3xl shadow-lg shadow-black/20 transition group-hover:rotate-6">
+                      {answer.emoji}
+                    </div>
+
+                    <p className="text-xl font-black text-lime-50">
+                      {answer.label}
+                    </p>
+
+                    <p className="mt-3 text-sm leading-6 text-emerald-100/75">
+                      Click to submit this extremely important answer.
+                    </p>
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="mt-8 rounded-3xl border border-lime-200/10 bg-lime-200/5 p-4 text-center">
+                <p className="text-sm text-emerald-100/80">
+                  Smile score so far:{" "}
+                  <span className="font-black text-lime-200">{score}</span>
+                </p>
+              </div>
+
+              <AnimatePresence>
+                {reaction && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 18, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -18, scale: 0.95 }}
+                    className="fixed inset-x-5 bottom-8 z-30 mx-auto max-w-xl rounded-3xl border border-lime-200/20 bg-emerald-950/95 p-5 text-center text-lg font-bold text-lime-50 shadow-2xl shadow-black/40 backdrop-blur-xl"
+                  >
+                    {reaction}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+          {screen === "mood" && (
+            <motion.div
+              key="mood"
+              initial={{ opacity: 0, y: 24, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -24, scale: 0.98 }}
+              transition={{ duration: 0.45 }}
+              className="relative w-full max-w-4xl rounded-[2rem] border border-emerald-200/20 bg-[#092315]/80 p-7 text-center shadow-2xl shadow-black/30 backdrop-blur-xl md:p-12"
+            >
+              <ProgressDots step={progressStep} />
+
               <div className="mb-6 flex justify-center gap-3 text-4xl">
-                <motion.span
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  🌿
-                </motion.span>
-                <motion.span
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-                >
-                  🫒
-                </motion.span>
-                <motion.span
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
-                >
-                  🍀
-                </motion.span>
+                {["🌿", "🫒", "🍀"].map((emoji, index) => (
+                  <motion.span
+                    key={emoji}
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      delay: index * 0.2,
+                    }}
+                  >
+                    {emoji}
+                  </motion.span>
+                ))}
               </div>
 
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-lime-200">
-                Question 1 of 1, probably
+                Final required question
               </p>
 
               <h2 className="mb-4 text-3xl font-black tracking-tight text-lime-50 md:text-5xl">
-                Lexi, are you having a good day?
+                Lexi, did this make you smile?
               </h2>
 
               <p className="mx-auto mb-10 max-w-xl text-emerald-100/85">
-                Choose honestly. The green committee is watching respectfully.
+                Choose honestly. But please note: the “No” button has poor
+                emotional stability and may attempt to escape.
               </p>
 
-              <div className="relative mx-auto flex min-h-[210px] w-full max-w-xl items-center justify-center gap-5">
+              <div className="relative mx-auto flex min-h-[240px] w-full max-w-xl items-center justify-center gap-5">
                 <motion.button
                   onClick={handleYes}
                   animate={{
@@ -259,11 +576,17 @@ export default function Page() {
                   whileHover={{
                     scale: yesScale + 0.06,
                   }}
-                  whileTap={{ scale: yesScale - 0.05 }}
-                  transition={{ type: "spring", stiffness: 220, damping: 16 }}
+                  whileTap={{
+                    scale: yesScale - 0.05,
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 220,
+                    damping: 16,
+                  }}
                   className="z-20 rounded-full bg-lime-300 px-8 py-4 text-lg font-black text-emerald-950 shadow-2xl shadow-lime-950/40 transition hover:bg-lime-200"
                 >
-                  I am now :)
+                  Yes, a little :)
                 </motion.button>
 
                 <motion.button
@@ -273,9 +596,13 @@ export default function Page() {
                     x: noSpot.x * 3,
                     y: noSpot.y * 3,
                     rotate: noSpot.rotate,
-                    scale: Math.max(1 - noCount * 0.04, 0.72),
+                    scale: Math.max(1 - noCount * 0.045, 0.66),
                   }}
-                  transition={{ type: "spring", stiffness: 260, damping: 14 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 14,
+                  }}
                   className="z-10 rounded-full border border-emerald-200/25 bg-emerald-900 px-7 py-4 text-base font-bold text-emerald-50 shadow-xl shadow-black/25 transition hover:bg-emerald-800"
                 >
                   {noLabel}
@@ -291,56 +618,76 @@ export default function Page() {
             </motion.div>
           )}
 
-          {step === "reveal" && (
+          {screen === "result" && (
             <motion.div
-              key="reveal"
+              key="result"
               initial={{ opacity: 0, y: 24, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -24, scale: 0.98 }}
               transition={{ duration: 0.45 }}
-              className="w-full max-w-3xl rounded-[2rem] border border-lime-200/20 bg-emerald-950/75 p-8 text-center shadow-2xl shadow-black/30 backdrop-blur-xl md:p-12"
+              className="w-full max-w-4xl rounded-[2rem] border border-lime-200/20 bg-emerald-950/75 p-7 text-center shadow-2xl shadow-black/30 backdrop-blur-xl md:p-12"
             >
+              <ProgressDots step={progressStep} />
+
               <motion.div
                 className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-lime-300 text-5xl shadow-xl shadow-lime-950/40"
-                animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.08, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity }}
+                animate={{
+                  rotate: [0, 8, -8, 0],
+                  scale: [1, 1.08, 1],
+                }}
+                transition={{
+                  duration: 1.8,
+                  repeat: Infinity,
+                }}
               >
                 ✨
               </motion.div>
 
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-lime-200">
-                Green joy unlocked
+                Results are in
               </p>
 
               <h2 className="mb-5 text-4xl font-black text-lime-50 md:text-6xl">
-                Excellent choice, Lexi.
+                Lexi’s Smile Score: {smileScore}%
               </h2>
 
-              <p className="mx-auto mb-8 max-w-xl text-lg leading-8 text-emerald-100/90">
-                Your official reward is a tiny digital leaf, a suspicious amount of
-                good vibes, and the knowledge that this website was made specifically
-                to make you smile.
+              <div className="mx-auto mb-8 h-5 max-w-xl overflow-hidden rounded-full bg-emerald-900 shadow-inner shadow-black/30">
+                <motion.div
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${smileScore}%` }}
+                  transition={{
+                    duration: 1,
+                    ease: "easeOut",
+                  }}
+                  className="h-full rounded-full bg-lime-300"
+                />
+              </div>
+
+              <p className="mx-auto mb-8 max-w-2xl text-lg leading-8 text-emerald-100/90">
+                Official diagnosis: Lexi has been exposed to dangerous levels of
+                green-themed silliness. Recommended treatment: accept one tiny
+                reward below and continue being herself.
               </p>
 
               <div className="grid gap-4 md:grid-cols-3">
                 {[
                   {
-                    title: "Option A",
-                    text: "Accept one virtual green flower.",
-                    button: "Accept 🌷",
+                    title: "Reward A",
+                    text: "One virtual green flower, hand-picked by pixels.",
+                    button: "Accept flower 🌷",
                     choice: "flower",
                   },
                   {
-                    title: "Option B",
-                    text: "Receive a compliment approved by the forest.",
-                    button: "Receive 🌲",
+                    title: "Reward B",
+                    text: "A compliment approved by the entire forest committee.",
+                    button: "Receive compliment 🌲",
                     choice: "compliment",
                   },
                   {
-                    title: "Option C",
-                    text: "Pretend this was a normal website.",
-                    button: "Impossible 🍀",
-                    choice: "normal",
+                    title: "Reward C",
+                    text: "A certificate saying this quiz was definitely normal.",
+                    button: "Claim certificate 🍀",
+                    choice: "certificate",
                   },
                 ].map((card) => (
                   <motion.button
@@ -354,46 +701,65 @@ export default function Page() {
                       {card.title}
                     </p>
                     <p className="mb-5 text-emerald-100/85">{card.text}</p>
-                    <span className="font-black text-lime-100">{card.button}</span>
+                    <span className="font-black text-lime-100">
+                      {card.button}
+                    </span>
                   </motion.button>
                 ))}
               </div>
             </motion.div>
           )}
 
-          {step === "final" && (
+          {screen === "final" && (
             <motion.div
               key="final"
               initial={{ opacity: 0, y: 24, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -24, scale: 0.98 }}
               transition={{ duration: 0.45 }}
-              className="w-full max-w-2xl rounded-[2rem] border border-lime-200/20 bg-[#071f13]/80 p-8 text-center shadow-2xl shadow-black/30 backdrop-blur-xl md:p-12"
+              className="w-full max-w-3xl rounded-[2rem] border border-lime-200/20 bg-[#071f13]/80 p-7 text-center shadow-2xl shadow-black/30 backdrop-blur-xl md:p-12"
             >
               <motion.div
                 className="mb-6 text-7xl"
-                animate={{ rotate: [0, -8, 8, 0], scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                animate={{
+                  rotate: [0, -8, 8, 0],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                }}
               >
                 🍀
               </motion.div>
 
-              <h2 className="mb-5 text-4xl font-black text-lime-50 md:text-6xl">
-                Mood officially improved.
-              </h2>
-
-              <p className="mx-auto mb-8 max-w-lg text-lg leading-8 text-emerald-100/90">
-                This page has concluded that Lexi deserves a very green, very silly,
-                very specific reason to smile today.
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-lime-200">
+                Final official message
               </p>
 
+              <h2 className="mb-5 text-4xl font-black text-lime-50 md:text-6xl">
+                Lexi, you passed.
+              </h2>
+
+              <p className="mx-auto mb-8 max-w-xl text-lg leading-8 text-emerald-100/90">
+                Not because the quiz was hard. It absolutely was not. You passed
+                because this whole thing was secretly just a tiny excuse to say:
+                you deserve a smile today.
+              </p>
+
+              <div className="mx-auto mb-8 max-w-xl rounded-[2rem] border border-lime-200/15 bg-lime-200/10 p-6 text-left">
+                <p className="mb-3 text-sm font-black uppercase tracking-[0.25em] text-lime-200">
+                  Certificate of Green Excellence
+                </p>
+                <p className="text-emerald-100/90">
+                  This certifies that Lexi has successfully completed the green
+                  smile quiz and is hereby awarded one extremely specific good
+                  vibe, valid forever.
+                </p>
+              </div>
+
               <motion.button
-                onClick={() => {
-                  track("restart_clicked", { previousNoCount: noCount });
-                  setNoCount(0);
-                  setNoSpot({ x: 0, y: 0, rotate: 0 });
-                  setStep("intro");
-                }}
+                onClick={restart}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
                 className="rounded-full bg-lime-300 px-8 py-4 text-lg font-extrabold text-emerald-950 shadow-xl shadow-lime-950/30 transition hover:bg-lime-200"
