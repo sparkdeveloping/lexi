@@ -1109,7 +1109,7 @@ export default function Page() {
   }
 
   return (
-    <main>Whatever youre looking for is not here</main>
+    <main>Mmmmm, i wonder what youre looking for</main>
     // <main
     //   onMouseMove={handleMouseMove}
     //   className="relative min-h-screen overflow-hidden bg-[#04140c] text-emerald-50"
