@@ -52,77 +52,77 @@ const quizQuestions = [
     id: "green",
     eyebrow: "Question 1",
     title: "What is the most powerful color in the universe?",
-    subtitle: "This is not biased. This is science performed by leaves.",
+    subtitle: "A very important question with a very obvious answer.",
     answers: [
       {
-        label: "Green, obviously",
-        reaction: "Correct. The trees are clapping politely.",
+        label: "Green",
+        reaction: "Correct. The leaves approve.",
         points: 30,
         emoji: "🌿",
       },
       {
-        label: "Olive green, specifically",
-        reaction: "Extremely refined answer. Very classy leaf behavior.",
+        label: "Olive green",
+        reaction: "Classy answer. Very Lexi-coded.",
         points: 35,
         emoji: "🫒",
       },
       {
-        label: "Not green",
-        reaction: "That answer has been gently recycled into compost.",
-        points: 10,
-        emoji: "♻️",
+        label: "Literally any green",
+        reaction: "Acceptable. The green council allows it.",
+        points: 30,
+        emoji: "🍀",
       },
     ],
   },
   {
-    id: "snack",
+    id: "day",
     eyebrow: "Question 2",
-    title: "Lexi is given a tiny magical leaf. What should it do?",
-    subtitle: "Choose carefully. The leaf has a little hat and everything.",
+    title: "If Lexi’s day had a reset button, what should it do?",
+    subtitle: "Choose wisely. This button has emotional responsibilities.",
     answers: [
       {
-        label: "Give her a good day",
-        reaction: "The leaf salutes. Mission accepted.",
-        points: 30,
-        emoji: "🍃",
+        label: "Make her smile",
+        reaction: "Simple. Correct. Powerful.",
+        points: 35,
+        emoji: "😊",
       },
       {
-        label: "Make her smile for no reason",
-        reaction: "Powerful. Slightly suspicious. Approved.",
-        points: 35,
+        label: "Give her peace",
+        reaction: "That one is special.",
+        points: 40,
+        emoji: "🕊️",
+      },
+      {
+        label: "Add more green",
+        reaction: "A practical solution to most problems.",
+        points: 30,
+        emoji: "💚",
+      },
+    ],
+  },
+  {
+    id: "verse",
+    eyebrow: "Question 3",
+    title: "Which verse belongs on Lexi’s little green page?",
+    subtitle: "This one was not random.",
+    answers: [
+      {
+        label: "Romans 8:18",
+        reaction: "Exactly. For I reckon...",
+        points: 45,
+        emoji: "📖",
+      },
+      {
+        label: "The one about glory coming",
+        reaction: "Yes. That is the one.",
+        points: 40,
         emoji: "✨",
       },
       {
-        label: "Follow her around dramatically",
-        reaction: "The leaf has entered theater mode.",
-        points: 25,
-        emoji: "🎭",
-      },
-    ],
-  },
-  {
-    id: "compliment",
-    eyebrow: "Question 3",
-    title: "What is Lexi’s official title today?",
-    subtitle: "This will go into the completely fake but very serious records.",
-    answers: [
-      {
-        label: "Duchess of Good Vibes",
-        reaction: "Royal decree accepted.",
-        points: 30,
-        emoji: "👑",
-      },
-      {
-        label: "CEO of Looking Pretty in Green",
-        reaction: "The board voted unanimously.",
-        points: 35,
-        emoji: "💚",
-      },
-      {
-        label: "Professional Smile Collector",
-        reaction: "A rare and important career path.",
-        points: 30,
-        emoji: "😊",
+        label: "The one Lexi loves",
+        reaction: "Correct because this quiz is clearly biased toward Lexi.",
+        points: 40,
+        emoji: "🌱",
       },
     ],
   },
@@ -155,7 +155,7 @@ function FloatingBlob({ className, duration = 8 }) {
 }
 
 function ProgressDots({ step }) {
-  const labels = ["Start", "Quiz", "Mood", "Reward"];
+  const labels = ["Start", "Quiz", "Smile", "Verse"];
 
   return (
     <div className="mx-auto mb-7 flex w-full max-w-md items-center justify-center gap-2">
@@ -212,7 +212,7 @@ export default function Page() {
   }, [screen]);
 
   const smileScore = useMemo(() => {
-    return Math.min(100, Math.round((score / 100) * 100) + 12);
+    return Math.min(100, Math.round((score / 120) * 100) + 14);
   }, [score]);
 
   const yesScale = useMemo(() => Math.min(1 + noCount * 0.2, 2.6), [noCount]);
@@ -356,10 +356,12 @@ export default function Page() {
         duration={8}
         className="absolute left-8 top-12 h-44 w-44 rounded-full bg-lime-300/20 blur-3xl"
       />
+
       <FloatingBlob
         duration={10}
         className="absolute bottom-10 right-10 h-60 w-60 rounded-full bg-emerald-400/20 blur-3xl"
       />
+
       <FloatingBlob
         duration={12}
         className="absolute bottom-1/3 left-1/3 h-40 w-40 rounded-full bg-green-200/10 blur-3xl"
@@ -416,7 +418,7 @@ export default function Page() {
               </motion.div>
 
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-lime-200">
-                Official Green Department
+                For Lexi
               </p>
 
               <h1 className="mb-5 text-4xl font-black tracking-tight text-lime-50 md:text-6xl">
@@ -424,22 +426,24 @@ export default function Page() {
               </h1>
 
               <p className="mx-auto mb-8 max-w-xl text-base leading-7 text-emerald-100/90 md:text-lg">
-                A very serious, definitely scientific quiz designed to check
-                Lexi’s mood, collect a few smiles, and prove that green is carrying
-                the entire universe.
+                A tiny green quiz made for one person only. Nothing too serious.
+                Just a few questions, a runaway button, and a little reminder that
+                good things are still ahead.
               </p>
 
               <div className="mb-8 grid gap-3 md:grid-cols-3">
                 {[
-                  ["3", "tiny questions"],
-                  ["1", "runaway button"],
-                  ["100%", "green nonsense"],
+                  ["", ""],
+                  ["", ""],
+                  ["", ""],
                 ].map(([number, label]) => (
                   <div
                     key={label}
                     className="rounded-3xl border border-lime-200/10 bg-lime-200/5 p-4"
                   >
-                    <p className="text-3xl font-black text-lime-200">{number}</p>
+                    <p className="text-2xl font-black text-lime-200 md:text-3xl">
+                      {number}
+                    </p>
                     <p className="text-sm text-emerald-100/75">{label}</p>
                   </div>
                 ))}
@@ -451,7 +455,7 @@ export default function Page() {
                 whileTap={{ scale: 0.97 }}
                 className="rounded-full bg-lime-300 px-8 py-4 text-lg font-extrabold text-emerald-950 shadow-xl shadow-lime-950/30 transition hover:bg-lime-200"
               >
-                Begin Lexi’s very official quiz
+                Start the quiz
               </motion.button>
             </motion.div>
           )}
@@ -499,7 +503,7 @@ export default function Page() {
                     </p>
 
                     <p className="mt-3 text-sm leading-6 text-emerald-100/75">
-                      Click to submit this extremely important answer.
+                      Pick this one.
                     </p>
                   </motion.button>
                 ))}
@@ -555,7 +559,7 @@ export default function Page() {
               </div>
 
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-lime-200">
-                Final required question
+                One last thing
               </p>
 
               <h2 className="mb-4 text-3xl font-black tracking-tight text-lime-50 md:text-5xl">
@@ -563,8 +567,8 @@ export default function Page() {
               </h2>
 
               <p className="mx-auto mb-10 max-w-xl text-emerald-100/85">
-                Choose honestly. But please note: the “No” button has poor
-                emotional stability and may attempt to escape.
+                Be honest. But the no button is extremely dramatic and may not stay
+                where you left it.
               </p>
 
               <div className="relative mx-auto flex min-h-[240px] w-full max-w-xl items-center justify-center gap-5">
@@ -611,7 +615,7 @@ export default function Page() {
 
               <div className="mt-8 rounded-3xl border border-lime-200/10 bg-lime-200/5 p-4">
                 <p className="text-sm text-emerald-100/80">
-                  Times Lexi tried to reject the green joy agenda:{" "}
+                  Times Lexi tried to say no:{" "}
                   <span className="font-black text-lime-200">{noCount}</span>
                 </p>
               </div>
@@ -644,7 +648,7 @@ export default function Page() {
               </motion.div>
 
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-lime-200">
-                Results are in
+                Results
               </p>
 
               <h2 className="mb-5 text-4xl font-black text-lime-50 md:text-6xl">
@@ -664,30 +668,29 @@ export default function Page() {
               </div>
 
               <p className="mx-auto mb-8 max-w-2xl text-lg leading-8 text-emerald-100/90">
-                Official diagnosis: Lexi has been exposed to dangerous levels of
-                green-themed silliness. Recommended treatment: accept one tiny
-                reward below and continue being herself.
+                Final result: Lexi deserves a good day, a smile, and probably
+                something green. Choose a tiny reward.
               </p>
 
               <div className="grid gap-4 md:grid-cols-3">
                 {[
                   {
                     title: "Reward A",
-                    text: "One virtual green flower, hand-picked by pixels.",
+                    text: "One virtual green flower, picked by pixels.",
                     button: "Accept flower 🌷",
                     choice: "flower",
                   },
                   {
                     title: "Reward B",
-                    text: "A compliment approved by the entire forest committee.",
-                    button: "Receive compliment 🌲",
+                    text: "A compliment wrapped in green.",
+                    button: "Receive compliment 💚",
                     choice: "compliment",
                   },
                   {
                     title: "Reward C",
-                    text: "A certificate saying this quiz was definitely normal.",
-                    button: "Claim certificate 🍀",
-                    choice: "certificate",
+                    text: "A verse card made just for this page.",
+                    button: "Open verse 📖",
+                    choice: "verse",
                   },
                 ].map((card) => (
                   <motion.button
@@ -734,29 +737,30 @@ export default function Page() {
               </motion.div>
 
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-lime-200">
-                Final official message
+                Romans 8:18
               </p>
 
               <h2 className="mb-5 text-4xl font-black text-lime-50 md:text-6xl">
-                Lexi, you passed.
+                For I reckon...
               </h2>
 
-              <p className="mx-auto mb-8 max-w-xl text-lg leading-8 text-emerald-100/90">
-                Not because the quiz was hard. It absolutely was not. You passed
-                because this whole thing was secretly just a tiny excuse to say:
-                you deserve a smile today.
-              </p>
-
-              <div className="mx-auto mb-8 max-w-xl rounded-[2rem] border border-lime-200/15 bg-lime-200/10 p-6 text-left">
-                <p className="mb-3 text-sm font-black uppercase tracking-[0.25em] text-lime-200">
-                  Certificate of Green Excellence
+              <div className="mx-auto mb-8 max-w-2xl rounded-[2rem] border border-lime-200/15 bg-lime-200/10 p-6 text-left shadow-xl shadow-black/20">
+                <p className="text-xl font-semibold leading-9 text-lime-50 md:text-2xl">
+                  “For I reckon that the sufferings of this present time are not
+                  worthy to be compared with the glory which shall be revealed in
+                  us.”
                 </p>
-                <p className="text-emerald-100/90">
-                  This certifies that Lexi has successfully completed the green
-                  smile quiz and is hereby awarded one extremely specific good
-                  vibe, valid forever.
+
+                <p className="mt-5 text-right text-sm font-black uppercase tracking-[0.25em] text-lime-200">
+                  Romans 8:18
                 </p>
               </div>
+
+              <p className="mx-auto mb-8 max-w-xl text-lg leading-8 text-emerald-100/90">
+                Lexi, this was just a small green page, but the point is simple:
+                there is more ahead, there is glory ahead, and today still has room
+                for a smile.
+              </p>
 
               <motion.button
                 onClick={restart}
@@ -764,7 +768,7 @@ export default function Page() {
                 whileTap={{ scale: 0.97 }}
                 className="rounded-full bg-lime-300 px-8 py-4 text-lg font-extrabold text-emerald-950 shadow-xl shadow-lime-950/30 transition hover:bg-lime-200"
               >
-                Run the green test again
+                Run it again
               </motion.button>
             </motion.div>
           )}
