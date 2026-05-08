@@ -1278,9 +1278,7 @@ export default function Page() {
 
                 <div className="mb-8 hidden gap-3 lg:grid lg:grid-cols-3">
                   {[
-                    ["4", "little questions"],
-                    ["2", "desktop games"],
-                    ["Romans 8:18", "final unlock"],
+                   
                   ].map(([number, label], index) => (
                     <motion.div
                       key={`${number}-${label}-${index}`}
