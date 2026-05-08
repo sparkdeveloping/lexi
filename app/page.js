@@ -1611,7 +1611,7 @@ export default function Page() {
                    
                   </p>
                   <span className="font-black text-lime-100">
-                    Start gridTemplateColumns
+                    Start Game
                   </span>
                 </motion.button>
 
