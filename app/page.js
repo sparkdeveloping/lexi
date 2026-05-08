@@ -433,9 +433,9 @@ export default function Page() {
 
               <div className="mb-8 grid gap-3 md:grid-cols-3">
                 {[
-                  ["-", "-"],
+                  ["-", "."],
                   ["_", "_"],
-                  ["-", "-"],
+                  ["-", "."],
                 ].map(([number, label]) => (
                   <div
                     key={label}
